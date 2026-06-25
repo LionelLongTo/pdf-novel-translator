@@ -27,6 +27,8 @@ class TranslationJob(Base):
     running_summary = Column(Text, default="")
     tone_style = Column(String(100), default="literary") # literary (văn học), detective (trinh thám), modern (hiện đại), classic (cổ điển), custom
     custom_instructions = Column(Text, default="") # các lưu ý khác từ người dùng
+    translator_provider = Column(String(50), default="openrouter") # openrouter, google
+
     
     error_message = Column(Text, nullable=True)
     

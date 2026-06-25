@@ -21,6 +21,7 @@ class GlossaryItemResponse(GlossaryItemBase):
 class JobSettingsUpdate(BaseModel):
     tone_style: Optional[str] = Field("literary", description="Văn phong dịch: literary, detective, modern, classic")
     custom_instructions: Optional[str] = Field("", description="Hướng dẫn xưng hô bổ sung từ người dùng")
+    translator_provider: Optional[str] = Field("openrouter", description="Nhà cung cấp dịch: openrouter, google")
     glossary: Optional[List[GlossaryItemBase]] = Field(None, description="Danh sách từ vựng tùy chỉnh")
 
 class JobCreateResponse(BaseModel):
@@ -44,6 +45,7 @@ class JobStatusResponse(BaseModel):
     estimated_time: int
     tone_style: str
     custom_instructions: str
+    translator_provider: str
     running_summary: str
     error_message: Optional[str] = None
     created_at: datetime

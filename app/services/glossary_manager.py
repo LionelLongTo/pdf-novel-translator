@@ -29,7 +29,7 @@ class GlossaryManager:
             
             # 2. Gọi API để lấy gợi ý thuật ngữ dưới dạng JSON
             translator = TranslatorService()
-            suggestions_raw = translator.scan_glossary_suggestions(text)
+            suggestions_raw = translator.scan_glossary_suggestions(text, provider=job.translator_provider)
             
             # 3. Dọn dẹp các gợi ý tự động cũ nếu có
             GlossaryRepository.clear_by_job(db, job_id, is_auto_suggested_only=True)

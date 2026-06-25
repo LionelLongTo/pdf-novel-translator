@@ -21,6 +21,21 @@ logger = logging.getLogger(__name__)
 try:
     logger.info("Đang khởi tạo các bảng cơ sở dữ liệu...")
     Base.metadata.create_all(bind=engine)
+    
+    # Tự động nâng cấp schema cho các cơ sở dữ liệu cũ (SQLite / PostgreSQL)
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(engine)
+        columns = [col["name"] for col in inspector.get_columns("translation_jobs")]
+        if "translator_provider" not in columns:
+            logger.info("Đang thực hiện nâng cấp database: thêm cột translator_provider vào bảng translation_jobs...")
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE translation_jobs ADD COLUMN translator_provider VARCHAR(50) DEFAULT 'openrouter';"))
+                conn.commit()
+            logger.info("Nâng cấp database thành công.")
+    except Exception as e:
+        logger.warning(f"Lỗi khi kiểm tra/nâng cấp schema database: {e}")
+
     logger.info("Khởi tạo cơ sở dữ liệu thành công.")
 except Exception as e:
     logger.error(f"Lỗi khi khởi tạo cơ sở dữ liệu: {e}")

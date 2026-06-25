@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS translation_jobs (
     running_summary TEXT DEFAULT '',
     tone_style VARCHAR(100) DEFAULT 'literary',
     custom_instructions TEXT DEFAULT '',
+    translator_provider VARCHAR(50) DEFAULT 'openrouter',
     error_message TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -11,6 +11,11 @@ class Settings:
     OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
     OPENROUTER_ALLOW_FALLBACKS: bool = os.getenv("OPENROUTER_ALLOW_FALLBACKS", "False").lower() in ("true", "1", "yes")
     
+    
+    TRANSLATOR_PROVIDER: str = os.getenv("TRANSLATOR_PROVIDER", "openrouter")
+    GEMINI_API_KEYS: str = os.getenv("GEMINI_API_KEYS", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./pdf_translator.db")
     
     UPLOAD_DIR: Path = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads")))

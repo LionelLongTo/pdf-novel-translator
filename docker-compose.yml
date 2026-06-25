@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf_translator_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount các thư mục upload, output và file SQLite DB để dữ liệu không bị mất khi restart container
+      - ./upload:/app/upload
+      - ./output:/app/output
+      - ./pdf_translator.db:/app/pdf_translator.db
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    build:
+      context: "../pdf converter FE"
+      dockerfile: Dockerfile
+      args:
+        # URL của API Backend gọi từ Trình duyệt người dùng (Client-side)
+        - VITE_API_URL=http://localhost:8000/api
+    container_name: pdf_translator_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: always

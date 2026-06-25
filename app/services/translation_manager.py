@@ -85,6 +85,10 @@ class TranslationManager:
         
         # Chỉ chặn khởi chạy khi tất cả các chunk thực sự đã được hoàn thành
         if total_chunks > 0 and total_chunks == completed_chunks:
+            if job.status != "completed":
+                job.status = "completed"
+                job.progress = 100.0
+                db.commit()
             raise ValueError("Tài liệu đã được dịch hoàn thành.")
             
         # Áp dụng các thay đổi thiết lập nếu có
@@ -93,6 +97,9 @@ class TranslationManager:
                 job.tone_style = settings_update.tone_style
             if settings_update.custom_instructions:
                 job.custom_instructions = settings_update.custom_instructions
+            if settings_update.translator_provider:
+                job.translator_provider = settings_update.translator_provider
+
                 
             # Cập nhật bảng từ vựng tùy chỉnh (nếu được truyền lên)
             if settings_update.glossary is not None:
@@ -187,6 +194,7 @@ class TranslationManager:
                     # Đã dịch xong hết toàn bộ các chunk
                     logger.info(f"Hoàn thành dịch tất cả các chunk cho Job {job_id}. Đang xuất PDF...")
                     cls.compile_final_document(db, job)
+                    db.commit()
                     break
                 
                 # Lưu các thông tin cần thiết vào biến cục bộ
@@ -197,6 +205,8 @@ class TranslationManager:
                 running_summary = job.running_summary
                 tone_style = job.tone_style
                 custom_instructions = job.custom_instructions
+                translator_provider = job.translator_provider or "openrouter"
+
                 
                 # Đảm bảo có text tiếng Anh
                 en_text = chunk.original_text or ""
@@ -230,7 +240,8 @@ class TranslationManager:
                         running_summary=running_summary,
                         glossary_list=glossary_list,
                         tone_style=tone_style,
-                        custom_instructions=custom_instructions
+                        custom_instructions=custom_instructions,
+                        translator_provider=translator_provider
                     )
                     translation_success = True
                 except Exception as e:

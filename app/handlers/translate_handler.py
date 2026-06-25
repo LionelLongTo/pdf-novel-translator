@@ -5,16 +5,37 @@ from pathlib import Path
 import os
 import uuid
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from app.database import get_db
 from app.config import settings
 from app.schemas import JobCreateResponse, JobStatusResponse, JobSettingsUpdate
 from app.repositories import JobRepository
 from app.services.translation_manager import TranslationManager
+from app.models import TranslationJob
 
 router = APIRouter(prefix="/translate", tags=["translate"])
 logger = logging.getLogger(__name__)
+
+@router.get("/", response_model=List[JobStatusResponse])
+def list_jobs(db: Session = Depends(get_db)):
+    """
+    Lấy danh sách tất cả các Job dịch thuật.
+    """
+    jobs = db.query(TranslationJob).order_by(TranslationJob.created_at.desc()).all()
+    result = []
+    for job in jobs:
+        has_pdf = False
+        has_html = False
+        if job.output_pdf_path:
+            has_pdf = Path(job.output_pdf_path).exists()
+            has_html = Path(job.output_pdf_path).with_suffix('.html').exists()
+        response = JobStatusResponse.from_orm(job)
+        response.has_pdf = has_pdf
+        response.has_html = has_html
+        result.append(response)
+    return result
+
 
 @router.post("/upload", response_model=JobCreateResponse)
 async def upload_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -84,6 +105,60 @@ def start_translation(
         raise HTTPException(status_code=500, detail=f"Lỗi hệ thống: {str(e)}")
 
 
+@router.post("/{job_id}/settings", response_model=JobStatusResponse)
+def update_job_settings(
+    job_id: str,
+    settings_update: JobSettingsUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Cập nhật cấu hình văn phong, xưng hô, cổng dịch và danh sách từ vựng (glossary) của Job mà không chạy dịch.
+    """
+    job = JobRepository.get_by_id(db, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Không tìm thấy Job dịch thuật.")
+        
+    if settings_update.tone_style:
+        job.tone_style = settings_update.tone_style
+    if settings_update.custom_instructions is not None:
+        job.custom_instructions = settings_update.custom_instructions
+    if settings_update.translator_provider:
+        job.translator_provider = settings_update.translator_provider
+        
+    # Cập nhật bảng từ vựng tùy chỉnh (nếu được truyền lên)
+    if settings_update.glossary is not None:
+        from app.repositories.glossary_repository import GlossaryRepository
+        from app.models import GlossaryItem
+        # Xóa glossary cũ của Job
+        GlossaryRepository.clear_by_job(db, job_id, is_auto_suggested_only=False)
+        
+        # Thêm danh sách glossary mới
+        db_items = []
+        for item in settings_update.glossary:
+            db_item = GlossaryItem(
+                term_en=item.term_en.strip(),
+                term_vi=item.term_vi.strip(),
+                description=item.description,
+                is_auto_suggested=False
+            )
+            db_items.append(db_item)
+        GlossaryRepository.bulk_create(db, job_id, db_items, commit=False)
+        
+    db.commit()
+    db.refresh(job)
+    
+    has_pdf = False
+    has_html = False
+    if job.output_pdf_path:
+        has_pdf = Path(job.output_pdf_path).exists()
+        has_html = Path(job.output_pdf_path).with_suffix('.html').exists()
+        
+    response = JobStatusResponse.from_orm(job)
+    response.has_pdf = has_pdf
+    response.has_html = has_html
+    return response
+
+
 @router.post("/{job_id}/pause", response_model=JobStatusResponse)
 def pause_translation(job_id: str, db: Session = Depends(get_db)):
     """
@@ -125,6 +200,28 @@ def get_job_status(job_id: str, db: Session = Depends(get_db)):
     response.has_pdf = has_pdf
     response.has_html = has_html
     return response
+
+
+@router.get("/{job_id}/chunks")
+def get_job_chunks(job_id: str, db: Session = Depends(get_db)):
+    """
+    Lấy danh sách các chunk bản dịch để hiển thị bản dịch song ngữ song song.
+    """
+    from app.models import TranslationChunk
+    chunks = db.query(TranslationChunk).filter(TranslationChunk.job_id == job_id).order_by(TranslationChunk.start_page.asc()).all()
+    return [
+        {
+            "id": chunk.id,
+            "start_page": chunk.start_page,
+            "end_page": chunk.end_page,
+            "original_text": chunk.original_text,
+            "translated_text": chunk.translated_text,
+            "status": chunk.status,
+            "error_message": chunk.error_message
+        }
+        for chunk in chunks
+    ]
+
 
 
 @router.get("/{job_id}/download/pdf")
