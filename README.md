@@ -158,6 +158,3 @@ Sau khi chạy, truy cập đường dẫn sau trên trình duyệt để sử d
 Dự án được phân phối dưới giấy phép MIT License. Xem chi tiết tại tệp `LICENSE` (nếu có).
 
 ---
-<div align="center">
-Được hoàn thiện bởi trợ lý AI Antigravity từ Google DeepMind team. 🚀
-</div>
