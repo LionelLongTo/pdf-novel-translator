@@ -1,0 +1,43 @@
+# Python cache and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+*.ttf
+*.otf
+
+# Virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Configuration and Secrets
+.env
+.env.local
+.env.*.local
+
+# Project generated directories
+upload/
+uploads/
+output/
+outputs/
+scratch/
+
+# Generated output and temporary files from translations
+translated_*.pdf
+translated_*.html
+*.pdf
+*.html
+
+# Database files
+*.db
+*.sqlite3
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

@@ -1,0 +1,3 @@
+from app.repositories.job_repository import JobRepository
+from app.repositories.chunk_repository import ChunkRepository
+from app.repositories.glossary_repository import GlossaryRepository
