@@ -12,8 +12,28 @@ class TranslationJob(Base):
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
     filename = Column(String(255), nullable=False)
-    file_path = Column(String(512), nullable=False)
-    output_pdf_path = Column(String(512), nullable=True)
+    _file_path = Column("file_path", String(512), nullable=False)
+    _output_pdf_path = Column("output_pdf_path", String(512), nullable=True)
+    
+    @property
+    def file_path(self):
+        if self._file_path:
+            return self._file_path.replace("\\", "/")
+        return self._file_path
+        
+    @file_path.setter
+    def file_path(self, value):
+        self._file_path = value
+        
+    @property
+    def output_pdf_path(self):
+        if self._output_pdf_path:
+            return self._output_pdf_path.replace("\\", "/")
+        return self._output_pdf_path
+        
+    @output_pdf_path.setter
+    def output_pdf_path(self, value):
+        self._output_pdf_path = value
     
     total_pages = Column(Integer, default=0)
     total_words = Column(Integer, default=0)
